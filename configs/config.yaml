@@ -1,0 +1,41 @@
+api:
+  host: 0.0.0.0
+  model_path: models/rainfall_model.keras
+  port: 8000
+  scaler_path: models/scaler.pkl
+dashboard:
+  data_refresh_interval: 300
+  port: 5500
+data:
+  dataset_file: data/raw/rainfall_data.csv
+  processed_dir: data/processed
+  random_state: 42
+  raw_dir: data/raw
+  sequence_length: 30
+  test_file: data/processed/test.csv
+  test_size: 0.2
+  train_file: data/processed/train.csv
+dvc:
+  remote_name: myremote
+  remote_url: s3://rainfall-prediction-data
+mlflow:
+  experiment_name: rainfall_prediction
+  model_name: rainfall_lstm_model
+  tracking_uri: mlruns
+model:
+  batch_size: 32
+  dense_units: 64
+  dropout: 0.3
+  early_stopping_patience: 10
+  epochs: 5
+  input_features:
+  - temperature
+  - humidity
+  - pressure
+  - wind_speed
+  - cloud_cover
+  - dew_point
+  learning_rate: 0.001
+  lstm_units: 128
+  target: rainfall_mm
+  type: lstm

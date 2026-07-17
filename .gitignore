@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+env/
+.env
+myenv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files (tracked by DVC)
+data/raw/*.csv
+data/processed/*.npy
+data/processed/*.csv
+
+# Models (tracked by DVC)
+models/*.keras
+models/*.pkl
+models/*.json
+models/plots/
+
+# MLflow
+mlruns/
+
+# DVC
+/dvc.lock
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+extracted_pdf.txt

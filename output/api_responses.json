@@ -1,0 +1,57 @@
+{
+  "health": {
+    "status": "healthy",
+    "model_loaded": true,
+    "scaler_loaded": true,
+    "data_available": true,
+    "timestamp": "2026-03-14T23:15:36.908104"
+  },
+  "summary": {
+    "total_records": 29200,
+    "stations": [
+      "Ahmedabad",
+      "Bangalore",
+      "Chennai",
+      "Delhi",
+      "Jaipur",
+      "Kolkata",
+      "Mumbai",
+      "Surat"
+    ],
+    "date_range": {
+      "start": "2014-01-01T00:00:00",
+      "end": "2023-12-29T00:00:00"
+    },
+    "rainfall_stats": {
+      "mean": 6.42,
+      "median": 0.0,
+      "max": 164.96,
+      "std": 14.19
+    },
+    "station_avg_rainfall": {
+      "Ahmedabad": 7.88,
+      "Bangalore": 5.66,
+      "Chennai": 5.89,
+      "Delhi": 5.54,
+      "Jaipur": 5.4,
+      "Kolkata": 5.55,
+      "Mumbai": 7.83,
+      "Surat": 7.61
+    },
+    "monthly_avg_rainfall": {
+      "1": 0.39,
+      "2": 0.32,
+      "3": 0.32,
+      "4": 0.32,
+      "5": 1.88,
+      "6": 16.8,
+      "7": 19.62,
+      "8": 19.13,
+      "9": 15.35,
+      "10": 1.84,
+      "11": 0.35,
+      "12": 0.35
+    }
+  },
+  "predict": "HTTP Error 500: Internal Server Error"
+}

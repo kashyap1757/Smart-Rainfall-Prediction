@@ -1,0 +1,224 @@
+SMART RAINFALL PREDICTION (GLOBAL WEATHER) - STEP-BY-STEP DOCUMENTATION
+======================================================================
+
+Notebook File
+-------------
+Smart_Rainfall_Prediction_GlobalWeather.ipynb
+
+Purpose
+-------
+This notebook builds an end-to-end rainfall prediction workflow using global weather observations.
+It demonstrates:
+1) data transformation,
+2) exploratory analytics,
+3) sequence modeling with Bidirectional LSTM,
+4) model evaluation,
+5) MLOps logging with MLflow.
+
+
+DATASET USED
+============
+Primary source file: GlobalWeatherRepository.csv (from archive.zip)
+
+Dataset characteristics used in notebook:
+- Global station-level weather records
+- Raw input fields used: last_updated, location_name, country, latitude, longitude,
+  temperature_celsius, humidity, pressure_mb, wind_kph, cloud, precip_mm
+- Date coverage seen in transformed output: 2024-05-16 to 2026-03-16
+- Transformed records in run: 122,808 rows
+
+Important note:
+The raw dataset does NOT contain station_name.
+The notebook creates station_name using a formula (see Step 1.5 Formula Cell).
+
+
+STEP-BY-STEP EXPLANATION
+========================
+
+Step 1: Setup and Environment
+-----------------------------
+Cell purpose:
+- Imports all required libraries (pandas, numpy, tensorflow/keras, sklearn, matplotlib, seaborn, plotly, mlflow).
+- Configures plotting defaults and suppresses warning noise.
+- Prints TensorFlow and MLflow versions for reproducibility trace.
+
+Why this matters:
+- Ensures a consistent runtime and dependency baseline before any data/model operation.
+
+
+Step 1.5: Data Transformation Intro
+-----------------------------------
+Cell purpose:
+- Describes that GlobalWeatherRepository is being transformed to the project schema (`rainfall_data.csv` format).
+- Sets expectation that a generated station identifier will be added.
+
+
+Step 1.5 Formula Cell: station_name Generation
+----------------------------------------------
+Function: build_station_name(location_name, country, latitude, longitude)
+
+Formula logic:
+- Clean `location_name` and `country` by trimming spaces and replacing spaces with underscores.
+- Encode latitude tag: absolute value (2 decimals) + N/S suffix.
+- Encode longitude tag: absolute value (2 decimals) + E/W suffix.
+- Final pattern:
+  station_name = "{location}_{country}_{lat_tag}_{lon_tag}"
+
+Example format:
+- Abu_Dhabi_United_Arab_Emirates_24.47N_054.37E
+
+Why this matters:
+- Creates a stable, unique station key from raw columns when station_name is absent.
+- Avoids directly inventing labels not traceable to source fields.
+
+
+Step 1.5 Main Transformation Cell
+---------------------------------
+Operations performed:
+1) Load raw CSV.
+2) Parse timestamp (`last_updated`) and normalize to daily date.
+3) Keep only locations with 600+ records (long-enough time series).
+4) Remove duplicate location-day rows.
+5) Create `station_name` using formula function.
+6) Compute dew point approximation:
+   Td ≈ T - (100 - RH) / 5
+7) Build transformed DataFrame with project schema columns:
+   date, station_name, latitude, longitude, region, temperature, humidity,
+   pressure, wind_speed, cloud_cover, dew_point, rainfall_mm
+8) Add temporal features: month, day_of_year, year.
+9) Sort and save to data/raw/rainfall_data.csv.
+
+Output intent:
+- Produces model-ready, schema-aligned dataset for downstream training.
+
+
+Step 2: Data Acquisition and Exploration
+----------------------------------------
+Cell purpose:
+- Reload transformed dataset from data/raw/rainfall_data.csv.
+- Validate shape, number of stations, and date range.
+
+Why this matters:
+- Confirms transformation output is valid before analytics/modeling.
+
+
+Step 2.1: Temporal Trend Analysis
+---------------------------------
+Cell purpose:
+- Select one station and plot rainfall over time.
+
+Why this matters:
+- Visual sanity-check for seasonality/spikes and data continuity.
+
+
+Step 2.2: Spatial Analysis
+--------------------------
+Cell purpose:
+- Aggregate average rainfall per station.
+- Print top stations by mean rainfall.
+- Visualize geospatial rainfall distribution using Plotly map.
+
+Why this matters:
+- Reveals spatial heterogeneity and high-rainfall clusters.
+
+
+Step 3: Preprocessing for Deep Learning
+---------------------------------------
+Cell purpose:
+- Build sliding-window sequences for LSTM.
+- Scale features with MinMaxScaler.
+
+Exact settings in notebook:
+- Features: temperature, humidity, wind_speed, pressure, rainfall_mm
+- Sequence length: 30 days
+- Split: 80% train, 20% test (chronological by sequence index)
+
+Why this matters:
+- LSTMs require 3D inputs [samples, timesteps, features].
+- Scaling stabilizes optimization and improves convergence.
+
+
+Step 4: Model Training (Bidirectional LSTM)
+-------------------------------------------
+Model architecture:
+- Bidirectional LSTM(64, return_sequences=True)
+- BatchNormalization
+- Dropout(0.2)
+- LSTM(32)
+- Dense(32, relu)
+- Dense(1) output
+
+Compile/training config:
+- Optimizer: Adam
+- Loss: MSE
+- Metric: MAE
+- Epochs: 10
+- Batch size: 32
+- Validation split: 0.1
+
+MLflow logging:
+- Experiment: Rainfall_Prediction_GlobalWeather
+- Logs key params: seq_length, units, dataset name, station count, train/test sizes
+- Logs test metrics and model artifact
+
+Why this matters:
+- Makes training reproducible and traceable for MLOps workflows.
+
+
+Step 5: Evaluation and Decision Support
+---------------------------------------
+Cell purpose:
+- Generate predictions on test set.
+- Compute MSE, RMSE, MAE.
+- Plot actual vs predicted time series.
+- Plot scatter (actual vs predicted) with diagonal reference.
+
+Why this matters:
+- Quantifies error and visually checks calibration/bias.
+- Supports decision-support confidence discussion.
+
+
+Step 6: MLOps Architecture Notes
+--------------------------------
+Notebook also documents:
+- DVC-based data versioning workflow,
+- MLflow experiment tracking,
+- FastAPI serving pattern,
+- Dockerized deployment concept.
+
+
+Step 7: Conclusion
+------------------
+The notebook concludes with:
+- successful end-to-end run on transformed GlobalWeatherRepository data,
+- recorded test metrics,
+- logged MLflow experiment for reproducibility.
+
+
+FILES PRODUCED/USED DURING PIPELINE
+===================================
+Inputs:
+- GlobalWeatherRepository.csv
+
+Outputs:
+- data/raw/rainfall_data.csv (transformed schema)
+- MLflow run artifacts/metrics under experiment Rainfall_Prediction_GlobalWeather
+
+Intermediate objects (in memory):
+- gwr, gwr_f, df, X_train, X_test, y_train, y_test, model, predictions
+
+
+ASSUMPTIONS & LIMITATIONS
+=========================
+1) station_name is generated (not native in source dataset).
+2) Dew point is approximated formula-based, not directly measured in raw input.
+3) The sequence model is trained on one selected station series (first station in current ordering).
+4) Metrics reported are on scaled target space unless inverse transform is explicitly applied.
+
+
+HOW TO EXPLAIN TO REVIEWER/FACULTY
+==================================
+- Dataset origin: GlobalWeatherRepository.csv (archive.zip).
+- Schema gap handling: station_name created by deterministic formula from source columns.
+- Pipeline integrity: transformation -> EDA -> sequence prep -> BiLSTM training -> evaluation.
+- Reproducibility: MLflow logs and saved transformed dataset enable reruns and auditability.

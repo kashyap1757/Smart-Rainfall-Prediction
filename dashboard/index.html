@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Rainfall Prediction | Analytics Dashboard</title>
+    <meta name="description" content="AI-powered rainfall prediction and decision support system with real-time analytics, geospatial visualization, and weather forecasting.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
+    
+    <!-- Leaflet.js for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Particles -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 2C16 2 8 10 8 18C8 22.4183 11.5817 26 16 26C20.4183 26 24 22.4183 24 18C24 10 16 2 16 2Z" 
+                              fill="url(#rain-gradient)" opacity="0.9"/>
+                        <path d="M16 6C16 6 11 12 11 17C11 19.7614 13.2386 22 16 22C18.7614 22 21 19.7614 21 17C21 12 16 6 16 6Z" 
+                              fill="url(#rain-gradient-inner)" opacity="0.6"/>
+                        <defs>
+                            <linearGradient id="rain-gradient" x1="8" y1="2" x2="24" y2="26">
+                                <stop offset="0%" stop-color="#60a5fa"/>
+                                <stop offset="100%" stop-color="#3b82f6"/>
+                            </linearGradient>
+                            <linearGradient id="rain-gradient-inner" x1="11" y1="6" x2="21" y2="22">
+                                <stop offset="0%" stop-color="#93c5fd"/>
+                                <stop offset="100%" stop-color="#60a5fa"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>RainSense AI</h1>
+                    <span class="tagline">Smart Rainfall Prediction & Decision Support</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="api-status" id="apiStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connecting...</span>
+                </div>
+                <div class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Stats Cards Row -->
+        <section class="stats-grid" id="statsGrid">
+            <div class="stat-card" id="statTotalRecords">
+                <div class="stat-icon rain-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/>
+                        <path d="M8 16l-2 3M12 16l-2 3M16 16l-2 3"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="valTotalRecords">--</span>
+                    <span class="stat-label">Total Records</span>
+                </div>
+            </div>
+            <div class="stat-card" id="statAvgRainfall">
+                <div class="stat-icon temp-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2v10l4 4"/>
+                        <circle cx="12" cy="18" r="4"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="valAvgRainfall">--</span>
+                    <span class="stat-label">Avg Rainfall (mm)</span>
+                </div>
+            </div>
+            <div class="stat-card" id="statMaxRainfall">
+                <div class="stat-icon warning-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="valMaxRainfall">--</span>
+                    <span class="stat-label">Max Rainfall (mm)</span>
+                </div>
+            </div>
+            <div class="stat-card" id="statStations">
+                <div class="stat-icon station-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <span class="stat-value" id="valStations">--</span>
+                    <span class="stat-label">Weather Stations</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav" id="tabNav">
+            <button class="tab-btn active" data-tab="overview" id="tabOverview">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                </svg>
+                Overview
+            </button>
+            <button class="tab-btn" data-tab="timeseries" id="tabTimeseries">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Time Series
+            </button>
+            <button class="tab-btn" data-tab="geospatial" id="tabGeospatial">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+                </svg>
+                Geospatial Map
+            </button>
+            <button class="tab-btn" data-tab="predict" id="tabPredict">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                Predict
+            </button>
+            <button class="tab-btn" data-tab="model" id="tabModel">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20V10M18 20V4M6 20v-4"/>
+                </svg>
+                Model Metrics
+            </button>
+        </nav>
+
+        <!-- Tab Content Panels -->
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="content-overview">
+            <div class="chart-grid">
+                <div class="chart-card large">
+                    <div class="chart-header">
+                        <h3>Monthly Average Rainfall by Station</h3>
+                        <div class="chart-controls">
+                            <select id="overviewYear" class="control-select" title="Filter overview chart by year" aria-label="Filter overview chart by year">
+                                <option value="all">All Years</option>
+                            </select>
+                            <select id="overviewRegion" class="control-select" title="Filter overview chart by region" aria-label="Filter overview chart by region">
+                                <option value="all">All Regions</option>
+                            </select>
+                            <select id="overviewTopStations" class="control-select" title="Choose how many stations appear in the overview chart" aria-label="Choose how many stations appear in the overview chart">
+                                <option value="6">Top 6 Stations</option>
+                                <option value="10">Top 10 Stations</option>
+                                <option value="15">Top 15 Stations</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="monthlyRainfallChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Rainfall Distribution</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="rainfallDistChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Station Comparison</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="stationCompChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Series Tab -->
+        <div class="tab-content" id="content-timeseries">
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3>Rainfall Time Series</h3>
+                        <div class="chart-controls">
+                            <select id="tsStation" class="control-select" title="Select station for time series" aria-label="Select station for time series">
+                                <option value="Mumbai">Mumbai</option>
+                            </select>
+                            <select id="tsYears" class="control-select" title="Select time range for time series" aria-label="Select time range for time series">
+                                <option value="1">1 Year</option>
+                                <option value="2">2 Years</option>
+                                <option value="3" selected>3 Years</option>
+                                <option value="5">5 Years</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-body chart-tall">
+                        <canvas id="timeseriesChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Temperature vs Rainfall Correlation</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="corrChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h3>Seasonal Patterns</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="seasonalChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geospatial Tab -->
+        <div class="tab-content" id="content-geospatial">
+            <div class="chart-grid">
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3>Rainfall Map - Weather Stations</h3>
+                        <div class="chart-controls">
+                            <select id="geoYear" class="control-select" title="Filter geospatial views by year" aria-label="Filter geospatial views by year">
+                                <option value="">All Years</option>
+                            </select>
+                            <select id="geoRegion" class="control-select" title="Filter geospatial views by region" aria-label="Filter geospatial views by region">
+                                <option value="all">All Regions</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-body chart-tall" id="mapContainer">
+                        <div id="rainfallMap" style="height: 100%; width: 100%; border-radius: 12px;"></div>
+                    </div>
+                </div>
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3>Station Rainfall Heatmap</h3>
+                        <div class="chart-controls">
+                            <select id="heatmapTopStations" class="control-select" title="Choose how many stations appear in the heatmap" aria-label="Choose how many stations appear in the heatmap">
+                                <option value="8">Top 8 Stations</option>
+                                <option value="12" selected>Top 12 Stations</option>
+                                <option value="16">Top 16 Stations</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="heatmapChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predict Tab -->
+        <div class="tab-content" id="content-predict">
+            <div class="predict-container">
+                <div class="predict-form-card">
+                    <div class="form-header">
+                        <div class="form-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 16.58A5 5 0 0018 7h-1.26A8 8 0 104 15.25"/>
+                                <path d="M8 16l-2 3M12 16l-2 3M16 16l-2 3"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3>Rainfall Prediction</h3>
+                            <p>Enter current weather conditions to predict rainfall</p>
+                        </div>
+                    </div>
+                    <form id="predictForm" class="predict-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inputTemp">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/>
+                                    </svg>
+                                    Temperature (°C)
+                                </label>
+                                <input type="number" id="inputTemp" step="0.1" value="28.5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputHumidity">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+                                    </svg>
+                                    Humidity (%)
+                                </label>
+                                <input type="number" id="inputHumidity" step="0.1" min="0" max="100" value="72.0" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inputPressure">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <path d="M12 6v6l4 2"/>
+                                    </svg>
+                                    Pressure (hPa)
+                                </label>
+                                <input type="number" id="inputPressure" step="0.1" value="1008.5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputWind">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M9.59 4.59A2 2 0 1111 8H2m10.59 11.41A2 2 0 1014 16H2m15.73-8.27A2.5 2.5 0 1119.5 12H2"/>
+                                    </svg>
+                                    Wind Speed (km/h)
+                                </label>
+                                <input type="number" id="inputWind" step="0.1" min="0" value="14.2" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inputCloud">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M18 10h-1.26A8 8 0 109 20h9a5 5 0 000-10z"/>
+                                    </svg>
+                                    Cloud Cover (%)
+                                </label>
+                                <input type="number" id="inputCloud" step="0.1" min="0" max="100" value="65.0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="inputDew">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+                                    </svg>
+                                    Dew Point (°C)
+                                </label>
+                                <input type="number" id="inputDew" step="0.1" value="22.3" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="predict-btn" id="predictBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            Predict Rainfall
+                        </button>
+                    </form>
+                </div>
+
+                <div class="predict-result-card" id="predictionResult" style="display: none;">
+                    <div class="result-header">
+                        <h3>Prediction Result</h3>
+                        <span class="result-timestamp" id="resultTimestamp"></span>
+                    </div>
+                    <div class="result-body">
+                        <div class="result-main">
+                            <div class="rainfall-value" id="resultRainfall">0.00</div>
+                            <div class="rainfall-unit">mm</div>
+                        </div>
+                        <div class="result-badge" id="resultIntensity">--</div>
+                        <div class="result-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Confidence</span>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" id="resultConfidence" style="width: 0%"></div>
+                                </div>
+                                <span class="detail-value" id="resultConfidenceText">0%</span>
+                            </div>
+                        </div>
+                        <div class="result-advisory" id="resultAdvisory">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="16" x2="12" y2="12"/>
+                                <line x1="12" y1="8" x2="12.01" y2="8"/>
+                            </svg>
+                            <p id="advisoryText">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Metrics Tab -->
+        <div class="tab-content" id="content-model">
+            <div class="chart-grid">
+                <div class="metrics-cards" id="metricsCards">
+                    <div class="metric-card">
+                        <span class="metric-label">MSE</span>
+                        <span class="metric-value" id="metricMSE">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">RMSE</span>
+                        <span class="metric-value" id="metricRMSE">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">MAE</span>
+                        <span class="metric-value" id="metricMAE">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">R² Score</span>
+                        <span class="metric-value" id="metricR2">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">Explained Variance</span>
+                        <span class="metric-value" id="metricEV">--</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="metric-label">MAPE</span>
+                        <span class="metric-value" id="metricMAPE">--</span>
+                    </div>
+                </div>
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3>Training History</h3>
+                    </div>
+                    <div class="chart-body chart-tall">
+                        <canvas id="trainingHistoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3>Model Architecture</h3>
+                    </div>
+                    <div class="model-arch" id="modelArch">
+                        <div class="arch-layer input-layer">
+                            <div class="layer-label">Input Layer</div>
+                            <div class="layer-detail">Sequence: 30 × 6 features</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-layer lstm-layer">
+                            <div class="layer-label">Bi-LSTM</div>
+                            <div class="layer-detail">128 units + BatchNorm + Dropout(0.3)</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-layer lstm-layer">
+                            <div class="layer-label">Bi-LSTM</div>
+                            <div class="layer-detail">64 units + BatchNorm + Dropout(0.3)</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-layer dense-layer">
+                            <div class="layer-label">Dense</div>
+                            <div class="layer-detail">64 units, ReLU</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-layer dense-layer">
+                            <div class="layer-label">Dense</div>
+                            <div class="layer-detail">32 units, ReLU</div>
+                        </div>
+                        <div class="arch-arrow">→</div>
+                        <div class="arch-layer output-layer">
+                            <div class="layer-label">Output</div>
+                            <div class="layer-detail">1 unit, Linear</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>Smart Rainfall Prediction & Decision Support System</p>
+            <p class="footer-sub">MTech CSE | Lab Practice II | Built with TensorFlow, FastAPI, MLflow</p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

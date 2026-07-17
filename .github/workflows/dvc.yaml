@@ -1,0 +1,68 @@
+# DVC Pipeline Configuration
+# ==========================
+# Defines the reproducible ML pipeline stages
+
+stages:
+  prepare_data:
+    cmd: python src/data_preparation.py
+    deps:
+      - src/data_preparation.py
+      - configs/config.yaml
+    outs:
+      - data/raw/rainfall_data.csv
+      - data/processed/X_train.npy
+      - data/processed/y_train.npy
+      - data/processed/X_test.npy
+      - data/processed/y_test.npy
+      - data/processed/train.csv
+      - data/processed/test.csv
+      - models/feature_scaler.pkl
+      - models/target_scaler.pkl
+    params:
+      - configs/config.yaml:
+          - data.sequence_length
+          - data.test_size
+          - model.input_features
+
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - src/model.py
+      - src/data_preparation.py
+      - data/processed/X_train.npy
+      - data/processed/y_train.npy
+      - data/processed/X_test.npy
+      - data/processed/y_test.npy
+      - configs/config.yaml
+    outs:
+      - models/rainfall_model.keras
+      - models/best_model.keras
+      - models/training_history.json
+      - models/plots/training_curves.png
+      - models/plots/predictions_vs_actual.png
+      - models/plots/scatter_plot.png
+    params:
+      - configs/config.yaml:
+          - model.type
+          - model.lstm_units
+          - model.dropout
+          - model.dense_units
+          - model.learning_rate
+          - model.epochs
+          - model.batch_size
+
+  evaluate:
+    cmd: python src/evaluate.py
+    deps:
+      - src/evaluate.py
+      - models/rainfall_model.keras
+      - models/target_scaler.pkl
+      - data/processed/X_test.npy
+      - data/processed/y_test.npy
+    metrics:
+      - models/evaluation_metrics.json:
+          cache: false
+    params:
+      - configs/config.yaml:
+          - model.type
