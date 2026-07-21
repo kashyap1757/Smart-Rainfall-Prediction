@@ -33,9 +33,6 @@ models/plots/
 # MLflow
 mlruns/
 
-# DVC
-/dvc.lock
-
 # OS
 .DS_Store
 Thumbs.db
