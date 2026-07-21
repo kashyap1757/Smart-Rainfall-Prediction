@@ -233,6 +233,16 @@ prepare_data ──→ train ──→ evaluate
 3. **Docker Build**: Build and push Docker image
 4. **Deploy**: Production deployment
 
+### Production Deployment Secrets
+Set these GitHub repository secrets before running the production deployment job:
+
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
+- `PROD_HOST`
+- `PROD_USER`
+- `PROD_SSH_KEY`
+- `PROD_SSH_PORT` (optional, defaults to `22`)
+
 ---
 
 ## 📊 Dashboard
