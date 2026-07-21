@@ -36,9 +36,10 @@ def build_lstm_model(input_shape, config=None):
         config = load_config()["model"]
     
     model = Sequential([
+        Input(shape=input_shape),
         # First LSTM layer with return sequences
         Bidirectional(
-            LSTM(config["lstm_units"], return_sequences=True, input_shape=input_shape),
+            LSTM(config["lstm_units"], return_sequences=True),
         ),
         BatchNormalization(),
         Dropout(config["dropout"]),

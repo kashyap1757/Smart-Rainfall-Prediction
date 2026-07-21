@@ -159,6 +159,11 @@ def load_kaggle_rainfall_data(n_years=10, n_stations=8):
     return df
 
 
+def generate_synthetic_rainfall_data(n_years=10, n_stations=8):
+    """Backward-compatible alias for synthetic rainfall data generation."""
+    return load_kaggle_rainfall_data(n_years=n_years, n_stations=n_stations)
+
+
 def create_sequences(data, seq_length, feature_cols, target_col):
     """
     Create time-series sequences for LSTM training.
