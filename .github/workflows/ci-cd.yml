@@ -117,6 +117,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/rainfall-prediction:latest
@@ -134,9 +135,27 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment: production
     steps:
-      - name: Deploy notification
-        run: |
-          echo "🚀 Deploying Smart Rainfall Prediction System"
-          echo "Docker image: ${{ secrets.DOCKER_USERNAME }}/rainfall-prediction:${{ github.sha }}"
-          echo "Deployment would pull and restart the container on cloud server"
-          # Example: ssh to server and docker-compose pull && docker-compose up -d
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          IMAGE_TAG: ${{ github.sha }}
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          port: ${{ secrets.PROD_SSH_PORT || '22' }}
+          envs: DOCKER_USERNAME,DOCKER_PASSWORD,IMAGE_TAG
+          script: |
+            set -euo pipefail
+            IMAGE="${DOCKER_USERNAME}/rainfall-prediction:${IMAGE_TAG}"
+            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+            docker pull "${IMAGE}"
+            docker stop rainfall-prediction-api || true
+            docker rm rainfall-prediction-api || true
+            docker run -d \
+              --name rainfall-prediction-api \
+              --restart unless-stopped \
+              -p 8000:8000 \
+              "${IMAGE}"

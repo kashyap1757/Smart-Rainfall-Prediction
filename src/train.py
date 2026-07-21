@@ -54,6 +54,7 @@ def train_model(config_path="configs/config.yaml"):
     print("STEP 2: MLflow Experiment Setup")
     print("=" * 60)
     
+    os.environ.setdefault("MLFLOW_ALLOW_FILE_STORE", "true")
     mlflow.set_tracking_uri(mlflow_config["tracking_uri"])
     mlflow.set_experiment(mlflow_config["experiment_name"])
     
